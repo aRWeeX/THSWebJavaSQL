@@ -13,8 +13,8 @@ public class ProductRepository {
 
     public Product create(Product product) throws SQLException {
         resolveManufacturerFromName(product);
-        String query = "INSERT INTO products (manufacturer_id, name, description, price, stock_quantity)" +
-                       " VALUES (?, ?, ?, ?, ?)";
+        String query = "INSERT INTO products (manufacturer_id, name, description, price, stock_quantity) " +
+                       "VALUES (?, ?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             if (product.getManufacturerId() == null) {
@@ -33,10 +33,10 @@ public class ProductRepository {
             if (affectedRows > 0) {
                 try (ResultSet rs = pstmt.getGeneratedKeys()) {
                     if (rs.next()) {
-                        int generatedId = rs.getInt(1);
+                        int productId = rs.getInt(1);
 
                         return new Product(
-                                generatedId,
+                                productId,
                                 product.getManufacturerId(),
                                 product.getName(),
                                 product.getManufacturerName(),
@@ -48,9 +48,9 @@ public class ProductRepository {
                 }
             }
 
-            throw new SQLException("Failed to create product, no rows affected.");
+            throw new SQLException("Failed to create the product. No rows were affected in the database operation.");
         } catch (SQLException e) {
-            throw new SQLException("Error inserting product: " + e.getMessage());
+            throw new SQLException("Error inserting the product into the database: " + e.getMessage(), e);
         }
     }
 
@@ -67,13 +67,15 @@ public class ProductRepository {
              ResultSet rs = stmt.executeQuery(query)) {
 
             while (rs.next()) {
+                int manufacturerId = rs.getObject("manufacturer_id") != null
+                        ? rs.getInt("manufacturer_id")
+                        : -1;
+
                 Product product = new Product(
                         rs.getInt("product_id"),
-                        rs.getObject("manufacturer_id", Integer.class) != null ?
-                                rs.getInt("manufacturer_id") : null,
+                        manufacturerId,
                         rs.getString("product_name"),
-                        rs.getString("manufacturer_name") != null ?
-                                rs.getString("manufacturer_name") : null
+                        rs.getString("manufacturer_name")
                 );
 
                 products.add(product);
@@ -98,12 +100,9 @@ public class ProductRepository {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    Object manufacturerObj = rs.getObject("manufacturer_id");
-                    Integer manufacturerId = (manufacturerObj != null) ? ((Number) manufacturerObj).intValue() : null;
-
                     return new Product(
                             rs.getInt("product_id"),
-                            manufacturerId,
+                            rs.getInt("manufacturer_id"),
                             rs.getString("product_name"),
                             rs.getString("manufacturer_name"),
                             rs.getString("description"),
@@ -128,7 +127,8 @@ public class ProductRepository {
             int affectedRows = pstmt.executeUpdate();
 
             if (affectedRows == 0) {
-                throw new SQLException("Failed to update product, no rows affected.");
+                throw new SQLException("Failed to update the product. " +
+                        "No rows were affected in the database operation.");
             }
         }
 
@@ -162,7 +162,7 @@ public class ProductRepository {
                 while (rs.next()) {
                     Product product = new Product(
                             rs.getInt("product_id"),
-                            rs.getObject("manufacturer_id", Integer.class),
+                            rs.getInt("manufacturer_id"),
                             rs.getString("product_name"),
                             rs.getString("manufacturer_name"),
                             rs.getString("description"),
@@ -198,7 +198,7 @@ public class ProductRepository {
                 while (rs.next()) {
                     Product product = new Product(
                             rs.getInt("product_id"),
-                            rs.getObject("manufacturer_id", Integer.class),
+                            rs.getInt("manufacturer_id"),
                             rs.getString("product_name"),
                             rs.getString("manufacturer_name"),
                             rs.getString("description"),
@@ -243,7 +243,7 @@ public class ProductRepository {
                     product.setManufacturerId(rs.getInt("manufacturer_id"));
                     product.setManufacturerName(rs.getString("name"));
                 } else {
-                    product.setManufacturerId(null);
+                    product.setManufacturerId(-1);
                     product.setManufacturerName(null);
                 }
             }

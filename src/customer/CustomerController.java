@@ -1,6 +1,7 @@
 package customer;
 
 import core.CoreController;
+import util.DevLogger;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -57,7 +58,7 @@ public class CustomerController extends CoreController {
                     break;
 
                 default:
-                    System.out.println("Invalid choice. Please try again.");
+                    System.out.println("That wasn't a valid option.");
             }
         } while (choice != 0);
     }
@@ -75,18 +76,20 @@ public class CustomerController extends CoreController {
         Customer customer = new Customer(
                 name,
                 email,
-                phone.isEmpty() ? null : phone,
-                address.isEmpty() ? null : address,
+                phone == null || phone.isEmpty() ? null : phone,
+                address == null || address.isEmpty() ? null : address,
                 password
         );
 
         try {
             Customer createdCustomer = customerService.createCustomer(customer);
-            System.out.println("Customer successfully created with ID " + createdCustomer.getCustomerId() + ".");
+            System.out.println("Customer with ID " + createdCustomer.getCustomerId() + " was created.");
         } catch (IllegalArgumentException e) {
+            DevLogger.logError(e);
             System.out.println(e.getMessage());
         } catch (SQLException e) {
-            System.err.println("An error occurred while processing the request: " + e.getMessage());
+            DevLogger.logError(e);
+            System.out.println("Something went wrong while handling your request.");
         }
     }
 
@@ -98,6 +101,7 @@ public class CustomerController extends CoreController {
 
         for (int i = 0; i < customers.size(); i++) {
             Customer customer = customers.get(i);
+
             System.out.println("Customer ID: " + customer.getCustomerId());
             System.out.println("Name: " + customer.getName());
             System.out.println("Email: " + customer.getEmail());
@@ -123,7 +127,7 @@ public class CustomerController extends CoreController {
             System.out.println("Address: " + (customer.getAddress() != null ? customer.getAddress() : "N/A"));
             System.out.println("Password: [HIDDEN]");
         } else {
-            System.out.println("No customer found with ID " + customerId + ".");
+            System.out.println("Customer with ID " + customerId + " wasn't found.");
         }
     }
 
@@ -132,34 +136,31 @@ public class CustomerController extends CoreController {
         System.out.println("--- Update customer ---");
 
         int customerId = getIntInput(scanner, "Enter customer ID: ");
-        Customer existingCustomer = customerService.getCustomerById(customerId);
+        Customer customer = customerService.getCustomerById(customerId);
 
-        if (existingCustomer == null) {
-            System.out.println("No customer found with ID " + customerId + ".");
-            return;
-        }
-
-        System.out.println("Current name: " + existingCustomer.getName());
+        System.out.println("Current name: " + customer.getName());
         String name = getStringInput(scanner, "Enter new name (or leave blank to keep current): ");
-        if (name.isEmpty()) name = existingCustomer.getName();
+        if (name.isEmpty()) name = customer.getName();
 
-        System.out.println("Current email: " + existingCustomer.getEmail());
+        System.out.println("Current email: " + customer.getEmail());
         String email = getStringInput(scanner, "Enter new email (or leave blank to keep current): ");
-        if (email.isEmpty()) email = existingCustomer.getEmail();
+        if (email.isEmpty()) email = customer.getEmail();
 
-        System.out.println("Current phone: " + (existingCustomer.getPhone() != null ?
-                existingCustomer.getPhone() : "N/A"));
+        System.out.println("Current phone: " + (customer.getPhone() != null
+                ? customer.getPhone()
+                : "N/A"));
         String phone = getStringInput(scanner, "Enter new phone (or leave blank to keep current): ");
-        if (phone.isEmpty()) phone = existingCustomer.getPhone();
+        if (phone.isEmpty()) phone = customer.getPhone();
 
-        System.out.println("Current address: " + (existingCustomer.getAddress() != null ?
-                existingCustomer.getAddress() : "N/A"));
+        System.out.println("Current address: " + (customer.getAddress() != null
+                ? customer.getAddress()
+                : "N/A"));
         String address = getStringInput(scanner, "Enter new address (or leave blank to keep current): ");
-        if (address.isEmpty()) address = existingCustomer.getAddress();
+        if (address.isEmpty()) address = customer.getAddress();
 
         System.out.println("Current password: [HIDDEN]");
         String password = getStringInput(scanner, "Enter new password (or leave blank to keep current): ");
-        if (password.isEmpty()) password = existingCustomer.getPassword();
+        if (password.isEmpty()) password = customer.getPassword();
 
         Customer updatedCustomer = new Customer(
                 customerId,
@@ -174,14 +175,16 @@ public class CustomerController extends CoreController {
             boolean updated = customerService.updateCustomer(updatedCustomer);
 
             if (updated) {
-                System.out.println("Customer successfully updated with ID " + customerId + ".");
+                System.out.println("Customer with ID " + customerId + " was updated.");
             } else {
-                System.out.println("No changes were made to customer.");
+                System.out.println("No changes were made to the customer.");
             }
         } catch (IllegalArgumentException e) {
+            DevLogger.logError(e);
             System.out.println(e.getMessage());
         } catch (SQLException e) {
-            System.err.println("An error occurred while processing the request: " + e.getMessage());
+            DevLogger.logError(e);
+            System.out.println("Something went wrong while handling your request.");
         }
     }
 
@@ -193,9 +196,10 @@ public class CustomerController extends CoreController {
 
         try {
             customerService.deleteCustomer(customerId);
-            System.out.println("Customer with ID " + customerId + " deleted successfully.");
+            System.out.println("Customer with ID " + customerId + " was deleted.");
         } catch (SQLException e) {
-            System.err.println("An error occurred while processing the request: " + e.getMessage());
+            DevLogger.logError(e);
+            System.out.println("Something went wrong while handling your request.");
         }
     }
 }

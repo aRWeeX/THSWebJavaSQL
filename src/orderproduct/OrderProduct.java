@@ -8,16 +8,24 @@ public class OrderProduct {
     private int productId;
     private int quantity;
     private BigDecimal unitPrice;
-    private String productName;
+    private String productName; // Joined in
 
-    public OrderProduct() {}
+    public OrderProduct() {
+        this(0, 0, 0, 0, BigDecimal.ZERO, null);
+    }
 
     public OrderProduct(int orderProductId, int orderId, int productId, int quantity, BigDecimal unitPrice) {
+        this(orderProductId, orderId, productId, quantity, unitPrice, null);
+    }
+
+    public OrderProduct(int orderProductId, int orderId, int productId,
+                        int quantity, BigDecimal unitPrice, String productName) {
         this.orderProductId = orderProductId;
         this.orderId = orderId;
         this.productId = productId;
         this.quantity = quantity;
         this.unitPrice = unitPrice;
+        this.productName = productName;
     }
 
     public int getOrderProductId() {
@@ -76,7 +84,7 @@ public class OrderProduct {
                 ", productId=" + productId +
                 ", quantity=" + quantity +
                 ", unitPrice=" + unitPrice +
-                ", productName='" + productName + '\'' +
+                ", productName='" + (productName != null ? productName : "N/A") + '\'' +
                 '}';
     }
 }

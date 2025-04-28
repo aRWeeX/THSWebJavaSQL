@@ -7,7 +7,6 @@ import java.util.List;
 public class CustomerService {
     private static final String EMAIL_REGEX =
             "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
-
     private final CustomerRepository customerRepository;
 
     public CustomerService(CustomerRepository customerRepository) {
@@ -31,7 +30,8 @@ public class CustomerService {
         Customer existingCustomer = customerRepository.getById(customer.getCustomerId());
 
         if (existingCustomer == null) {
-            throw new IllegalArgumentException("No customer found with ID " + customer.getCustomerId() + ".");
+            throw new IllegalArgumentException("No customer was found with the provided ID: " +
+                    customer.getCustomerId());
         }
 
         validateCustomerInput(customer);
@@ -48,7 +48,7 @@ public class CustomerService {
         Customer existingCustomer = customerRepository.getById(customerId);
 
         if (existingCustomer == null) {
-            throw new IllegalArgumentException("No customer found with ID " + customerId + ".");
+            throw new IllegalArgumentException("No customer was found with the provided ID: " + customerId);
         }
 
         customerRepository.delete(customerId);
@@ -74,7 +74,6 @@ public class CustomerService {
 
     private void validateCustomerInput(Customer customer) {
         trimCustomerFields(customer);
-
         List<String> missing = new ArrayList<>();
 
         if (isNullOrEmpty(customer.getName())) missing.add("name");
@@ -85,26 +84,25 @@ public class CustomerService {
             String message;
 
             if (missing.size() > 1) {
-                message = "Missing required fields: "
-                        + String.join(
-                                ", ", missing.subList(0, missing.size() - 1))
-                                + " and "
-                                + missing.get(missing.size() - 1);
+                message = "Missing required fields: " +
+                        String.join(", ", missing.subList(0, missing.size() - 1)) +
+                        " and " +
+                        missing.get(missing.size() - 1);
             } else {
                 message = "Missing required field: " + missing.get(0);
             }
 
             message += ".";
-
             throw new IllegalArgumentException(message);
         }
 
         if (isInvalidEmail(customer.getEmail())) {
-            throw new IllegalArgumentException("Invalid email format.");
+            throw new IllegalArgumentException("Please enter a valid email address. " +
+                    "Make sure it contains \"@\" and a domain name.");
         }
 
         if (!isNullOrEmpty(customer.getPassword()) && customer.getPassword().length() < 8) {
-            throw new IllegalArgumentException("Password must be at least 8 characters long.");
+            throw new IllegalArgumentException("Your password must be at least 8 characters long.");
         }
     }
 }

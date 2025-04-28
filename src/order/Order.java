@@ -9,16 +9,25 @@ import java.util.List;
 public class Order {
     private int orderId;
     private int customerId;
-    private LocalDateTime orderDate; // May be null
-    private List<OrderProduct> products;
-    private BigDecimal totalPrice;
+    private LocalDateTime orderDate;
+    private List<OrderProduct> products; // Joined in
+    private BigDecimal totalPrice; // Joined in
 
-    public Order() {}
+    public Order() {
+        this(-1, -1, null, null, null);
+    }
 
-    public Order(int orderId, int customerId, LocalDateTime orderDate) {
+    public Order(int orderId, int customerId) {
+        this(orderId, customerId, null, null, null);
+    }
+
+    public Order(int orderId, int customerId, LocalDateTime orderDate,
+                 List<OrderProduct> products, BigDecimal totalPrice) {
         this.orderId = orderId;
         this.customerId = customerId;
         this.orderDate = orderDate;
+        this.products = products;
+        this.totalPrice = totalPrice;
     }
 
     public int getOrderId() {
@@ -67,8 +76,8 @@ public class Order {
                 "orderId=" + orderId +
                 ", customerId=" + customerId +
                 ", orderDate=" + orderDate +
-                ", products=" + products +
-                ", totalPrice=" + totalPrice +
+                ", products=" + (products != null ? products : "N/A") +
+                ", totalPrice=" + (totalPrice != null ? totalPrice : "N/A") +
                 '}';
     }
 }

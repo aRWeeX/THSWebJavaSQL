@@ -1,6 +1,7 @@
 package order;
 
 import orderproduct.OrderProduct;
+import util.DevLogger;
 
 import java.math.BigDecimal;
 import java.sql.*;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OrderRepository {
+    private static final DateTimeFormatter ORDER_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final Connection connection;
 
     public OrderRepository(Connection connection) {
@@ -17,8 +19,8 @@ public class OrderRepository {
     }
 
     public Order create(Order order, List<OrderProduct> products) throws SQLException {
-        String queryOrders = "INSERT INTO orders (customer_id, order_date) VALUES (?, ?)";
-        String queryOrdersProducts = """
+        String queryOrder = "INSERT INTO orders (customer_id) VALUES (?)";
+        String queryOrderProduct = """
             INSERT INTO orders_products (order_id, product_id, quantity, unit_price)
             VALUES (?, ?, ?, ?)
         """;
@@ -27,48 +29,48 @@ public class OrderRepository {
             connection.setAutoCommit(false);
             int orderId;
 
-            try (PreparedStatement ordersStmt =
-                         connection.prepareStatement(queryOrders, Statement.RETURN_GENERATED_KEYS)) {
-                ordersStmt.setInt(1, order.getCustomerId());
-
-                if (order.getOrderDate() != null) {
-                    ordersStmt.setTimestamp(2, Timestamp.valueOf(order.getOrderDate()));
-                } else {
-                    ordersStmt.setNull(2, Types.TIMESTAMP);
-                }
-
-                ordersStmt.executeUpdate();
-                ResultSet rs = ordersStmt.getGeneratedKeys();
+            try (PreparedStatement orderPstmt = connection.prepareStatement(
+                    queryOrder,
+                    Statement.RETURN_GENERATED_KEYS)) {
+                orderPstmt.setInt(1, order.getCustomerId());
+                orderPstmt.executeUpdate();
+                ResultSet rs = orderPstmt.getGeneratedKeys();
 
                 if (rs.next()) {
                     orderId = rs.getInt(1);
                 } else {
-                    throw new SQLException("Failed to create order, no rows affected.");
+                    throw new SQLException("Failed to create the order. " +
+                            "No rows were affected in the database operation.");
                 }
             }
 
-            try (PreparedStatement ordersProductsStmt = connection.prepareStatement(queryOrdersProducts)) {
+            try (PreparedStatement orderProductPstmt = connection.prepareStatement(queryOrderProduct)) {
                 for (OrderProduct op : products) {
-                    ordersProductsStmt.setInt(1, orderId);
-                    ordersProductsStmt.setInt(2, op.getProductId());
-                    ordersProductsStmt.setInt(3, op.getQuantity());
-                    ordersProductsStmt.setBigDecimal(4, op.getUnitPrice());
-                    ordersProductsStmt.addBatch();
+                    orderProductPstmt.setInt(1, orderId);
+                    orderProductPstmt.setInt(2, op.getProductId());
+                    orderProductPstmt.setInt(3, op.getQuantity());
+                    orderProductPstmt.setBigDecimal(4, op.getUnitPrice());
+
+                    orderProductPstmt.addBatch();
                 }
 
-                ordersProductsStmt.executeBatch();
+                orderProductPstmt.executeBatch();
             }
 
             connection.commit();
 
             return new Order(
                     orderId,
-                    order.getCustomerId(),
-                    order.getOrderDate()
+                    order.getCustomerId()
             );
         } catch (SQLException e) {
-            connection.rollback();
-            throw e;
+            try {
+                connection.rollback();
+            } catch (SQLException rollbackEx) {
+                DevLogger.logError(rollbackEx);
+            }
+
+            throw new SQLException("Error inserting the order into the database: " + e.getMessage(), e);
         } finally {
             connection.setAutoCommit(true);
         }
@@ -100,9 +102,7 @@ public class OrderRepository {
                 while (rs.next()) {
                     int orderId = rs.getInt("order_id");
                     String orderDateString = rs.getString("order_date");
-
-                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                    LocalDateTime orderDate = LocalDateTime.parse(orderDateString, formatter);
+                    LocalDateTime orderDate = LocalDateTime.parse(orderDateString, ORDER_DATE_FORMATTER);
 
                     if (currentOrder == null || currentOrder.getOrderId() != orderId) {
                         if (currentOrder != null) {
@@ -110,6 +110,7 @@ public class OrderRepository {
                         }
 
                         currentOrder = new Order();
+
                         currentOrder.setOrderId(orderId);
                         currentOrder.setOrderDate(orderDate);
                         currentOrder.setProducts(new ArrayList<>());
@@ -122,6 +123,7 @@ public class OrderRepository {
                     String productName = rs.getString("product_name");
 
                     OrderProduct product = new OrderProduct();
+
                     product.setProductId(productId);
                     product.setQuantity(quantity);
                     product.setUnitPrice(unitPrice);

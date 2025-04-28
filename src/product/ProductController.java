@@ -1,6 +1,7 @@
 package product;
 
 import core.CoreController;
+import util.DevLogger;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
@@ -68,7 +69,7 @@ public class ProductController extends CoreController {
                     break;
 
                 default:
-                    System.out.println("Invalid choice. Please try again.");
+                    System.out.println("That wasn't a valid option.");
             }
         } while (choice != 0);
     }
@@ -84,18 +85,20 @@ public class ProductController extends CoreController {
 
         Product product = new Product(
                 name,
-                description.isEmpty() ? null : description,
+                description == null || description.isEmpty() ? null : description,
                 price,
                 stockQuantity
         );
 
         try {
             Product createdProduct = productService.createProduct(product);
-            System.out.println("Product successfully created with ID " + createdProduct.getProductId() + ".");
+            System.out.println("Product with ID " + createdProduct.getProductId() + " was created.");
         } catch (IllegalArgumentException e) {
+            DevLogger.logError(e);
             System.out.println(e.getMessage());
         } catch (SQLException e) {
-            System.err.println("An error occurred while processing the request: " + e.getMessage());
+            DevLogger.logError(e);
+            System.out.println("Something went wrong while handling your request.");
         }
     }
 
@@ -107,6 +110,7 @@ public class ProductController extends CoreController {
 
         for (int i = 0; i < products.size(); i++) {
             Product product = products.get(i);
+
             System.out.println("Product ID: " + product.getProductId());
             System.out.println("Name: " + product.getName());
             System.out.println("Description: " + product.getDescription());
@@ -126,14 +130,18 @@ public class ProductController extends CoreController {
 
         if (product != null) {
             System.out.println("Product ID: " + product.getProductId());
-            System.out.println("Manufacturer ID: " + product.getManufacturerId());
+            System.out.println("Manufacturer ID: " + (product.getManufacturerId() != -1
+                    ? product.getManufacturerId()
+                    : "N/A"));
             System.out.println("Name: " + product.getName());
-            System.out.println("Manufacturer name: " + product.getManufacturerName());
+            System.out.println("Manufacturer name: " + (product.getManufacturerName() != null
+                    ? product.getManufacturerName()
+                    : "N/A"));
             System.out.println("Description: " + (product.getDescription() != null ? product.getDescription() : "N/A"));
             System.out.println("Price: " + product.getPrice());
             System.out.println("Stock quantity: " + product.getStockQuantity());
         } else {
-            System.out.println("No product found with ID " + productId + ".");
+            System.out.println("Product with ID " + productId + " wasn't found.");
         }
     }
 
@@ -142,35 +150,35 @@ public class ProductController extends CoreController {
         System.out.println("--- Update product ---");
 
         int productId = getIntInput(scanner, "Enter product ID: ");
-        Product existingProduct = productService.getProductById(productId);
+        Product product = productService.getProductById(productId);
 
-        if (existingProduct == null) {
-            System.out.println("No product found with ID " + productId + ".");
-            return;
-        }
-
-        System.out.println("Current name: " + existingProduct.getName());
+        System.out.println("Current name: " + product.getName());
         String name = getStringInput(scanner, "Enter new name (or leave blank to keep current): ");
-        if (name.isEmpty()) name = existingProduct.getName();
+        if (name.isEmpty()) name = product.getName();
 
-        System.out.println("Current description: " + (existingProduct.getDescription() != null ?
-                existingProduct.getDescription() : "N/A"));
+        System.out.println("Current description: " + (product.getDescription() != null
+                ? product.getDescription()
+                : "N/A"));
         String description = getStringInput(
-                scanner, "Enter new description (or leave blank to keep current): ");
-        if (description.isEmpty()) description = existingProduct.getDescription();
+                scanner,
+                "Enter new description (or leave blank to keep current): ");
+        if (description.isEmpty()) description = product.getDescription();
 
-        System.out.println("Current price: " + existingProduct.getPrice());
+        System.out.println("Current price: " + product.getPrice());
         BigDecimal price = getBigDecimalInput(scanner, "Enter new price (or leave blank to keep current): ");
-        if (price == null) price = existingProduct.getPrice();
+        if (price == null) price = product.getPrice();
 
-        System.out.println("Current stock quantity: " + existingProduct.getStockQuantity());
+        System.out.println("Current stock quantity: " + product.getStockQuantity());
         Integer stockQuantity = getIntInput(
-                scanner, "Enter new stock quantity (or leave blank to keep current): ");
-        if (stockQuantity == null) stockQuantity = existingProduct.getStockQuantity();
+                scanner,
+                "Enter new stock quantity (or leave blank to keep current): ");
+        if (stockQuantity == null) stockQuantity = product.getStockQuantity();
 
         Product updatedProduct = new Product(
                 productId,
+                product.getManufacturerId(),
                 name,
+                product.getManufacturerName(),
                 description == null || description.isEmpty() ? null : description,
                 price,
                 stockQuantity
@@ -180,14 +188,16 @@ public class ProductController extends CoreController {
             boolean updated = productService.updateProduct(updatedProduct);
 
             if (updated) {
-                System.out.println("Product successfully deleted with ID " + productId + ".");
+                System.out.println("Product with ID " + productId + " was updated.");
             } else {
-                System.out.println("No changes were made to product.");
+                System.out.println("No changes were made to the product.");
             }
         } catch (IllegalArgumentException e) {
+            DevLogger.logError(e);
             System.out.println(e.getMessage());
         } catch (SQLException e) {
-            System.err.println("An error occurred while processing the request: " + e.getMessage());
+            DevLogger.logError(e);
+            System.out.println("Something went wrong while handling your request.");
         }
     }
 
@@ -199,20 +209,22 @@ public class ProductController extends CoreController {
 
         try {
             productService.deleteProduct(productId);
-            System.out.println("Product with ID " + productId + " deleted successfully.");
+            System.out.println("Product with ID " + productId + " was deleted.");
         } catch (SQLException e) {
-            System.err.println("An error occurred while processing the request: " + e.getMessage());
+            DevLogger.logError(e);
+            System.out.println("Something went wrong while handling your request.");
         }
     }
 
     private void searchProductsByName(Scanner scanner) throws SQLException {
         System.out.println();
         System.out.println("--- Search products by name ---");
-        String searchKeyword = getStringInput(scanner, "Enter search keyword (name): ");
-        List<Product> products = productService.searchProductsByName(searchKeyword);
+
+        String nameKeyword = getStringInput(scanner, "Enter name search keyword: ");
+        List<Product> products = productService.searchProductsByName(nameKeyword);
 
         if (products.isEmpty()) {
-            System.out.println("No products found matching keyword (name) \"" + searchKeyword + "\".");
+            System.out.println("No products found matching \"" + nameKeyword + "\".");
         } else {
             System.out.println("Matching products:");
 
@@ -225,11 +237,12 @@ public class ProductController extends CoreController {
     private void searchProductsByCategory(Scanner scanner) throws SQLException {
         System.out.println();
         System.out.println("--- Search products by category ---");
-        String searchCategory = getStringInput(scanner, "Enter search keyword (category): ");
-        List<Product> products = productService.searchProductsByCategory(searchCategory);
+
+        String categoryKeyword = getStringInput(scanner, "Enter category search keyword: ");
+        List<Product> products = productService.searchProductsByCategory(categoryKeyword);
 
         if (products.isEmpty()) {
-            System.out.println("No products found matching keyword (category) \"" + searchCategory + "\".");
+            System.out.println("No products found matching \"" + categoryKeyword + "\".");
         } else {
             System.out.println("Matching products:");
 

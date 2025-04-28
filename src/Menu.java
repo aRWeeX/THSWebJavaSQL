@@ -1,6 +1,7 @@
 import customer.CustomerController;
 import order.OrderController;
 import product.ProductController;
+import util.DevLogger;
 
 import java.sql.SQLException;
 import java.util.InputMismatchException;
@@ -38,7 +39,8 @@ public class Menu {
                 choice = Integer.parseInt(input);
                 handleMenuOption(choice);
             } catch (InputMismatchException | NumberFormatException e) {
-                System.err.println("That's not a valid number. Please try again.");
+                DevLogger.logError(e);
+                System.err.println("Please enter a valid option from the menu.");
             }
         } while (choice != 0);
     }
@@ -59,14 +61,15 @@ public class Menu {
                     break;
 
                 case 0:
-                    System.out.println("Closing the application.");
+                    System.out.println("Closing down the application.");
                     break;
 
                 default:
-                    System.out.println("Invalid choice. Please try again.");
+                    System.out.println("That wasn't a valid option.");
             }
         } catch (SQLException e) {
-            System.err.println("Something went wrong while accessing the database: " + e.getMessage());
+            DevLogger.logError(e);
+            System.out.println("We're having trouble connecting to the system. Please try again later.");
         }
     }
 

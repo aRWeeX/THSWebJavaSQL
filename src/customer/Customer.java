@@ -10,12 +10,16 @@ public class Customer {
     private String address; // May be null
     private String password;
 
+    public Customer() {
+        this(-1, null, null, null, null, null);
+    }
+
     public Customer(int customerId, String name, String email) {
         this(customerId, name, email, null, null, null);
     }
 
     public Customer(String name, String email, String phone, String address, String password) {
-        this(0, name, email, phone, address, password);
+        this(-1, name, email, phone, address, password);
     }
 
     public Customer(int customerId, String name, String email, String phone, String address, String password) {
@@ -80,12 +84,12 @@ public class Customer {
         if (object == null || getClass() != object.getClass()) return false;
         Customer customer = (Customer) object;
 
-        return customerId == customer.customerId
-                && Objects.equals(name, customer.name)
-                && Objects.equals(email, customer.email)
-                && Objects.equals(phone, customer.phone)
-                && Objects.equals(address, customer.address)
-                && Objects.equals(password, customer.password);
+        return customerId == customer.customerId &&
+                Objects.equals(name, customer.name) &&
+                Objects.equals(email, customer.email) &&
+                Objects.equals(phone, customer.phone) &&
+                Objects.equals(address, customer.address) &&
+                Objects.equals(password, customer.password);
     }
 
     @Override

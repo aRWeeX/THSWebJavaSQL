@@ -10,6 +10,8 @@ import product.ProductController;
 import product.ProductRepository;
 import product.ProductService;
 
+import util.DevLogger;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -25,14 +27,15 @@ public class Main {
             ProductController productController = new ProductController(productService);
 
             OrderRepository orderRepository = new OrderRepository(connection);
-            OrderService orderService = new OrderService(orderRepository, customerService);
+            OrderService orderService = new OrderService(orderRepository);
             OrderController orderController = new OrderController(orderService);
 
             Menu menu = new Menu(customerController, productController, orderController);
             menu.showMainMenu();
             menu.closeScanner();
         } catch (SQLException e) {
-            System.err.println("Could not connect to the database: " + e.getMessage());
+            DevLogger.logError(e);
+            System.out.println("Something went wrong while connecting.");
         }
     }
 }

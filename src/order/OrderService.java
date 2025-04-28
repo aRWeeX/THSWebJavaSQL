@@ -1,7 +1,5 @@
 package order;
 
-import customer.Customer;
-import customer.CustomerService;
 import orderproduct.OrderProduct;
 
 import java.sql.SQLException;
@@ -9,11 +7,9 @@ import java.util.List;
 
 public class OrderService {
     private final OrderRepository orderRepository;
-    private final CustomerService customerService;
 
-    public OrderService(OrderRepository orderRepository, CustomerService customerService) {
+    public OrderService(OrderRepository orderRepository) {
         this.orderRepository = orderRepository;
-        this.customerService = customerService;
     }
 
     public Order createOrder(Order order, List<OrderProduct> products) throws SQLException {
@@ -27,14 +23,11 @@ public class OrderService {
 
     private void validateOrderInput(Order order, List<OrderProduct> products) throws SQLException {
         if (order == null || products == null || products.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Order must not be null, and the product list must not be null or empty.");
+            throw new IllegalArgumentException("An order must include at least one product.");
         }
 
-        Customer customer = customerService.getCustomerById(order.getCustomerId());
-
-        if (customer == null) {
-            throw new IllegalArgumentException("No customer found with that ID.");
+        if (order.getCustomerId() == -1) {
+            throw new IllegalArgumentException("No customer exists with the provided ID.");
         }
     }
 }

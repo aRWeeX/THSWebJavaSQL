@@ -2,10 +2,10 @@ package order;
 
 import core.CoreController;
 import orderproduct.OrderProduct;
+import util.DevLogger;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -61,7 +61,7 @@ public class OrderController extends CoreController {
                     break;
 
                 default:
-                    System.out.println("Invalid choice. Please try again.");
+                    System.out.println("That wasn't a valid option.");
             }
         } while (choice != 0);
     }
@@ -71,7 +71,6 @@ public class OrderController extends CoreController {
         System.out.println("--- Add order ---");
 
         int customerId = getIntInput(scanner, "Enter customer ID: ");
-        LocalDateTime orderDate = LocalDateTime.now();
         List<OrderProduct> products = new ArrayList<>();
         boolean addingMore = true;
 
@@ -81,8 +80,8 @@ public class OrderController extends CoreController {
             BigDecimal unitPrice = getBigDecimalInput(scanner, "Enter unit price: ");
 
             products.add(new OrderProduct(
-                    0,
-                    0,
+                    -1,
+                    -1,
                     productId,
                     quantity,
                     unitPrice)
@@ -93,18 +92,19 @@ public class OrderController extends CoreController {
         }
 
         Order order = new Order(
-                0,
-                customerId,
-                orderDate
+                -1,
+                customerId
         );
 
         try {
             Order createdOrder = orderService.createOrder(order, products);
-            System.out.println("Order successfully created with ID " + createdOrder.getOrderId() + ".");
+            System.out.println("Order with ID " + createdOrder.getOrderId() + " was created.");
         } catch (IllegalArgumentException e) {
+            DevLogger.logError(e);
             System.out.println(e.getMessage());
         } catch (SQLException e) {
-            System.err.println("An error occurred while processing the request: " + e.getMessage());
+            DevLogger.logError(e);
+            System.out.println("Something went wrong while handling your request.");
         }
     }
 
@@ -118,15 +118,16 @@ public class OrderController extends CoreController {
         if (!orders.isEmpty()) {
             for (int i = 0; i < orders.size(); i++) {
                 Order order = orders.get(i);
+
                 System.out.println("Order ID: " + order.getOrderId());
                 System.out.println("Order date: " + order.getOrderDate());
                 System.out.println("Products:");
 
                 for (OrderProduct orderProduct : order.getProducts()) {
-                    System.out.println("- Name: " + orderProduct.getProductName()
-                                     + ", Product ID: " + orderProduct.getProductId()
-                                     + ", Quantity: " + orderProduct.getQuantity()
-                                     + ", Unit price: " + orderProduct.getUnitPrice());
+                    System.out.println("- Name: " + orderProduct.getProductName() +
+                            ", product ID: " + orderProduct.getProductId() +
+                            ", quantity: " + orderProduct.getQuantity() +
+                            ", unit price: " + orderProduct.getUnitPrice());
                 }
 
                 System.out.println("Total price: " + order.getTotalPrice());
@@ -136,7 +137,7 @@ public class OrderController extends CoreController {
                 }
             }
         } else {
-            System.out.println("No orders found for this customer.");
+            System.out.println("This customer has no associated orders.");
         }
     }
 }

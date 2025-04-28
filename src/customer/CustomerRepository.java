@@ -26,10 +26,10 @@ public class CustomerRepository {
             if (affectedRows > 0) {
                 try (ResultSet rs = pstmt.getGeneratedKeys()) {
                     if (rs.next()) {
-                        int generatedId = rs.getInt(1);
+                        int customerId = rs.getInt(1);
 
                         return new Customer(
-                                generatedId,
+                                customerId,
                                 customer.getName(),
                                 customer.getEmail(),
                                 customer.getPhone(),
@@ -40,9 +40,9 @@ public class CustomerRepository {
                 }
             }
 
-            throw new SQLException("Failed to create customer, no rows affected.");
+            throw new SQLException("Failed to create the customer. No rows were affected in the database operation.");
         } catch (SQLException e) {
-            throw new SQLException("Error inserting customer: " + e.getMessage());
+            throw new SQLException("Error inserting the customer into the database: " + e.getMessage(), e);
         }
     }
 
@@ -91,27 +91,30 @@ public class CustomerRepository {
     }
 
     public Customer update(int customerId, Customer updatedCustomer) throws SQLException {
-        String query = "UPDATE customers SET name = ?, email = ?, phone = ?, address = ?, password = ?" +
-                       " WHERE customer_id = ?";
+        String query = "UPDATE customers SET name = ?, email = ?, phone = ?, address = ?, password = ? " +
+                       "WHERE customer_id = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setString(1, updatedCustomer.getName());
             pstmt.setString(2, updatedCustomer.getEmail());
             pstmt.setObject(
                     3,
-                    updatedCustomer.getPhone() == null || updatedCustomer.getPhone().isEmpty() ?
-                            null : updatedCustomer.getPhone());
+                    updatedCustomer.getPhone() == null || updatedCustomer.getPhone().isEmpty()
+                            ? null
+                            : updatedCustomer.getPhone());
             pstmt.setObject(
                     4,
-                    updatedCustomer.getAddress() == null || updatedCustomer.getAddress().isEmpty() ?
-                            null : updatedCustomer.getAddress());
+                    updatedCustomer.getAddress() == null || updatedCustomer.getAddress().isEmpty()
+                            ? null
+                            : updatedCustomer.getAddress());
             pstmt.setString(5, updatedCustomer.getPassword());
             pstmt.setInt(6, customerId);
 
             int affectedRows = pstmt.executeUpdate();
 
             if (affectedRows == 0) {
-                throw new SQLException("Failed to update customer, no rows affected.");
+                throw new SQLException("Failed to update the customer. " +
+                        "No rows were affected in the database operation.");
             }
         }
 

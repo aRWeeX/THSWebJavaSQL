@@ -1,3 +1,5 @@
+import util.DevLogger;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -9,7 +11,9 @@ public class DatabaseConnection {
         try {
             Class.forName("org.sqlite.JDBC");
         } catch (ClassNotFoundException e) {
-            throw new SQLException("The SQLite JDBC driver could not be found.", e);
+            DevLogger.logError(e);
+            System.out.println("We're having trouble connecting to the database. Please try again later.");
+            throw new SQLException("Unable to load the SQLite JDBC driver: " + e.getMessage(), e);
         }
 
         return DriverManager.getConnection(DATABASE_URL);

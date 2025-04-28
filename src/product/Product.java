@@ -5,27 +5,32 @@ import java.util.Objects;
 
 public class Product {
     private int productId;
-    private Integer manufacturerId;
+    private int manufacturerId; // May be null
     private String name;
-    private String manufacturerName; // May be null
+    private String manufacturerName; // Joined in
     private String description; // May be null
     private BigDecimal price;
     private int stockQuantity;
 
-    public Product(int productId, Integer manufacturerId, String name, String manufacturerName) {
-        this(productId, manufacturerId, name, manufacturerName, null, null, 0);
+    public Product() {
+        this(-1, -1, null, null,
+                null, null, -1);
+    }
+
+    public Product(int productId, int manufacturerId, String name, String manufacturerName) {
+        this(productId, manufacturerId, name, manufacturerName, null, null, -1);
     }
 
     public Product(int productId, String name, String description, BigDecimal price, int stockQuantity) {
-        this(productId, null, name, null, description, price, stockQuantity);
+        this(productId, -1, name, null, description, price, stockQuantity);
     }
 
     public Product(String name, String description, BigDecimal price, int stockQuantity) {
-        this(0, null, name, null, description, price, stockQuantity);
+        this(-1, -1, name, null, description, price, stockQuantity);
     }
 
-    public Product(int productId, Integer manufacturerId, String name, String manufacturerName, String description,
-                   BigDecimal price, int stockQuantity) {
+    public Product(int productId, int manufacturerId, String name, String manufacturerName,
+                   String description, BigDecimal price, int stockQuantity) {
         this.productId = productId;
         this.manufacturerId = manufacturerId;
         this.name = name;
@@ -47,7 +52,7 @@ public class Product {
         return manufacturerId;
     }
 
-    public void setManufacturerId(Integer manufacturerId) {
+    public void setManufacturerId(int manufacturerId) {
         this.manufacturerId = manufacturerId;
     }
 
@@ -95,7 +100,14 @@ public class Product {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Product product = (Product) o;
-        return productId == product.productId && stockQuantity == product.stockQuantity && Objects.equals(manufacturerId, product.manufacturerId) && Objects.equals(name, product.name) && Objects.equals(manufacturerName, product.manufacturerName) && Objects.equals(description, product.description) && Objects.equals(price, product.price);
+
+        return productId == product.productId &&
+                stockQuantity == product.stockQuantity &&
+                Objects.equals(manufacturerId, product.manufacturerId) &&
+                Objects.equals(name, product.name) &&
+                Objects.equals(manufacturerName, product.manufacturerName) &&
+                Objects.equals(description, product.description) &&
+                Objects.equals(price, product.price);
     }
 
     @Override
@@ -107,7 +119,7 @@ public class Product {
     public String toString() {
         return "Product{" +
                 "productId=" + productId +
-                ", manufacturerId=" + manufacturerId +
+                ", manufacturerId=" + (manufacturerId != -1 ? manufacturerId : "N/A") +
                 ", name='" + name + '\'' +
                 ", manufacturerName='" + (manufacturerName != null ? manufacturerName : "N/A") + '\'' +
                 ", description='" + (description != null ? description : "N/A") + '\'' +

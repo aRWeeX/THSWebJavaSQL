@@ -28,7 +28,7 @@ public class ProductService {
         Product existingProduct = productRepository.getById(product.getProductId());
 
         if (existingProduct == null) {
-            throw new IllegalArgumentException("No product found with ID " + product.getProductId() + ".");
+            throw new IllegalArgumentException("No product was found with the provided ID: " + product.getProductId());
         }
 
         validateProductInput(product);
@@ -45,7 +45,7 @@ public class ProductService {
         Product existingProduct = productRepository.getById(productId);
 
         if (existingProduct == null) {
-            throw new IllegalArgumentException("No product found with ID " + productId + ".");
+            throw new IllegalArgumentException("No product was found with the provided ID: " + productId);
         }
 
         productRepository.delete(productId);
@@ -53,7 +53,7 @@ public class ProductService {
 
     public List<Product> searchProductsByName(String keyword) throws SQLException {
         if (isNullOrEmpty(keyword)) {
-            throw new IllegalArgumentException("Search keyword is required.");
+            throw new IllegalArgumentException("A name is required for the search.");
         }
 
         return productRepository.searchByName(keyword);
@@ -61,7 +61,7 @@ public class ProductService {
 
     public List<Product> searchProductsByCategory(String categoryName) throws SQLException {
         if (isNullOrEmpty(categoryName)) {
-            throw new IllegalArgumentException("Search category is required.");
+            throw new IllegalArgumentException("A category is required for the search.");
         }
 
         return productRepository.searchByCategory(categoryName);
@@ -85,15 +85,15 @@ public class ProductService {
         trimProductFields(product);
 
         if (isNullOrEmpty(product.getName())) {
-            throw new IllegalArgumentException("Name is required.");
+            throw new IllegalArgumentException("A name is required to continue.");
         }
 
         if (product.getPrice() == null || product.getPrice().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Price is required and cannot be negative.");
+            throw new IllegalArgumentException("A price is required and must be a positive value.");
         }
 
         if (product.getStockQuantity() < 0) {
-            throw new IllegalArgumentException("Stock quantity is required and cannot be negative.");
+            throw new IllegalArgumentException("A stock quantity is required and must be a positive value.");
         }
     }
 }
